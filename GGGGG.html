@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<title>Star Wars</title>
+
+
+<script type="application/javascript">
+var INTERVAL = 20;
+var DEBUG = false;
+
+var canvas;     
+var ctx;            
+var WIDTH = 640; 
+var HEIGHT = 480; 
+
+var defaultPlayerX = 100;
+var defaultPlayerY = 300;
+
+this.Player1X = 300;
+this.Player1Y = 420;
+var Player1Score = 0;
+
+this.Player2X = 200;      
+this.Player2Y = 420; 
+var Player2Score = 0;
+
+var SpriteWidth = 32;   
+var SpriteHeight = 32;
+
+this.Laser1X = this.Player1X + 16;
+this.Laser1Y = this.Player1Y;
+this.Laser2X = this.Player2X + 16;
+this.Laser2Y = this.Player2Y;
+
+var tickCount = 2;         
+var MAX_TICK_COUNT = 4;   
+
+var sprite_loaded = true;     
+var tiles_loaded  = true;  
+var tieFighterImageLoaded = false;
+var pageLoadComplete = false;
+
+var Player1 = new Image();
+Player1.src = "XwingRed.png";
+
+var Player2 = new Image();
+Player2.src = "XwingBlue.png";
+
+var tieFighters = new Image();
+tieFighters.src = "tieFighterExplode.png";
+tieFighters.onload = tieFightersLoaded;  
+
+var tieFighterMaxRow = 1;
+   
+var imageOffset = 32; 
+var SPEED = 5;
+
+
+  var spriteType = {
+    NONE:             0,
+    USERCONTROLLED:   1,
+    tieFighter:       2,
+  };
+
+
+class Sprite {
+  constructor(name, t) {
+    this.name = name;
+    this.active = false;
+    this.type = t; 
+    this.X = 0;
+    this.Y = 0;
+    this.DX = 0;
+    this.DY = 0;
+
+    this.height = SpriteHeight;  
+    this.width = SpriteWidth;   
+    this.cellHeight = SpriteHeight; 
+    this.cellWidth = SpriteWidth;    
+
+    this.cellRow = 1;
+    this.cellCol = 1;
+
+    this.MaxSpriteCol = 1;
+
+    this.myImage = 0;
+  }
+  SetHeightWidth(h, w) {
+    this.height = h; 
+    this.width = w;
+  }
+  SetCellHeightWidth(h, w) {
+    this.cellHeight = h; 
+    this.cellWidth = w;
+  }
+  SetImage(myim) {
+    this.myImage = myim;
+  }
+  SetType(t) {
+    this.type = t;
+  }
+  SetXY(newX, newY) {
+    this.X = newX;
+    this.Y = newY;
+  }
+  SetDXDY(newDX, newDY) {
+    this.DX = newDX;
+    this.DY = newDY;
+  }
+  SetHeightWidth(h, w) {
+    this.height = h;
+    this.width = w;
+  }
+  UpdateXY(tempX, tempY) {
+    this.X = tempX;
+    this.Y = tempY;
+  }
+
+  Spawn() {
+    var myX = Math.floor(Math.random()*(WIDTH-32));
+    var myY = Math.floor(Math.random()*(HEIGHT-32));
+
+    this.SetXY(myX, myY);
+
+    var myDX = SPEED - Math.floor(Math.random()*(SPEED*2));
+    var myDY = SPEED - Math.floor(Math.random()*(SPEED*2));
+    
+    this.SetDXDY(myDX, myDY);
+
+    this.cellCol = Math.floor(Math.random()*this.MaxSpriteCol);
+    this.cellRow = 0;
+
+    this.active = true;
+  }
+  DrawSprite() {
+  	ctx.drawImage(Player1, this.cellCol * SpriteWidth, this.cellRow * SpriteHeight, SpriteWidth, SpriteHeight, Player1X, Player1Y, SpriteWidth, SpriteHeight);
+  	ctx.drawImage(Player2, this.cellCol * SpriteWidth, this.cellRow * SpriteHeight, SpriteWidth, SpriteHeight, Player2X, Player2Y, SpriteWidth, SpriteHeight);
+	ctx.drawImage(this.myImage, this.cellCol*this.cellWidth, this.cellRow*this.cellHeight, this.width, this.height, this.X, this.Y, this.width, this.height); 
+	}
+}
+
+class tieFighter extends Sprite {
+  constructor() {
+    super("tieFighter", spriteType.tieFighter);
+    this.popping = false; 
+  }
+  Spawn() {
+    super.Spawn();
+    this.popping = false;
+  }
+  Move() {
+    var newX = this.X + this.DX;
+    var newY = this.Y + this.DY;
+
+    if (this.popping) {
+
+      this.cellRow++;
+      if (this.cellRow >= tieFighterMaxRow)
+        this.active = false;
+    } else if ((newX < this.width) || 
+       	       (newX > WIDTH - this.width) ||
+               (newY < this.height) || 
+               (newY > HEIGHT - this.height)) {
+
+      this.popping = true;
+      if (DEBUG)
+        console.log("Set sprite " + i + " Inactive; off-screen");
+    } else {
+
+      this.X = newX;
+      this.Y = newY;
+    }
+  }
+}
+
+let sprites = new Array();
+
+sprites.push(new Sprite("player1", spriteType.USERCONTROLLED));
+sprites[0].X = defaultPlayerX;
+sprites[0].Y = defaultPlayerY;
+for (var i=0; i<10; i++) {
+  sprites.push(new tieFighter());
+}
+
+function tieFightersLoaded() {
+  tieFighterMaxRow = Math.floor(tieFighters.height/imageOffset);
+  tieFighterImageLoaded = true;
+}
+
+var myInterval;
+
+function spaceSW() {
+  document.bgColor = "#474747";
+  Fill = "#474747";
+}
+
+function eraseSprite(X, Y) {
+  ctx.clearRect(X, Y, 32, 32);
+}
+
+function eraseEverything() {  
+ctx.clearRect(0, 0, WIDTH, HEIGHT);
+drawScore1();
+drawScore2();
+}
+
+function drawEverything() {
+  for (var i=1; i<sprites.length; i++) {
+    if (sprites[i].active) {
+       sprites[i].DrawSprite();
+   }
+  }
+}
+
+function drawScore1() {
+   	ctx.font = "16px arial";
+	ctx.fillStyle = "#ffffff";
+	ctx.fillText("Player 1 : " + Player1Score, 8, 20);
+}
+
+function drawScore2() {
+        ctx.font = "16px arial";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText("Player 2 : " + Player2Score, 550, 20);
+}
+ 
+function collisionDetector() {
+
+  for (let i = 0; i < sprites.length; i++) {
+
+  if (((Laser1X >= sprites[i].X && Laser1X <= sprites[i].X + 64) || (Laser1X + 64 >= sprites[i].X && Laser1X + 64 <= sprites[i].X + 64)) &&
+       ((Laser1Y >= sprites[i].Y && Laser1Y <= sprites[i].Y + 64) || (Laser1Y + 64 >= sprites[i].Y && Laser1Y + 64 <= sprites[i].Y + 64)))
+         {
+         ctx.beginPath();
+  	 ctx.lineWidth = 1;
+   	 ctx.strokeStyle = "#F40000";
+  	 ctx.moveTo(Laser1X, Laser1Y);
+  	 ctx.lineTo(sprites[i].X + 16, sprites[i].Y + 16);
+  	 ctx.stroke();
+         
+  	 Player1Score += 10;
+	 this.popping = false
+ 	 eraseSprite();
+         }
+   if (((Laser2X >= sprites[i].X && Laser2X <= sprites[i].X + 32) || (Laser2X + 32 >= sprites[i].X && Laser2X + 32 <= sprites[i].X + 32)) &&
+       ((Laser2Y >= sprites[i].Y && Laser2Y <= sprites[i].Y + 32) || (Laser2Y + 32 >= sprites[i].Y && Laser2Y + 32 <= sprites[i].Y + 32)))
+         {
+         ctx.beginPath();
+  	 ctx.lineWidth = 1;
+  	 ctx.strokeStyle = "#F40000";
+  	 ctx.moveTo(Laser2X, Laser2Y);
+  	 ctx.lineTo(sprites[i].X + 16, sprites[i].Y + 16);
+  	 ctx.stroke();
+
+         Player2Score += 10;
+	 this.popping = false
+	 eraseSprite();         
+}
+     }
+}
+
+function Tick() {
+  eraseEverything();
+  tickCount--;
+
+  if (tickCount <= 0) {
+    tickCount = Math.floor(Math.random()*(MAX_TICK_COUNT));
+
+    var i = 1; 
+    var found = false;
+
+    while ((i<sprites.length) && (!found)) {
+      if ((!sprites[i].active) && (sprites[i].type == spriteType.tieFighter)) {
+        found = true;
+        if (DEBUG)
+          console.log("Can use sprite " + i + " ");
+        sprites[i].Spawn();
+        if (DEBUG)
+          console.log("Set sprite " + i + " Active; spawn");
+      }
+      i++;
+    }
+  } 
+
+  for (var i=1; i<sprites.length; i++) {
+    if (sprites[i].active) {
+      sprites[i].Move();
+    }
+  }
+
+  drawEverything();
+}
+
+
+function loadComplete() {
+  console.log("Load is complete."); 
+  canvas = document.getElementById("theCanvas");
+  ctx = canvas.getContext("2d");
+
+  pageLoadComplete = true;
+
+  myInterval = self.setInterval(function(){check4all_loaded()}, 500);
+}
+
+
+function check4all_loaded() {
+  var checkStr = 'check4all timer: ';
+  if (tieFighterImageLoaded)
+    checkStr += '  + tieFighters';
+  else
+    checkStr += '  - tieFighters';
+  if (pageLoadComplete)
+    checkStr += '  + pageLoadComplete';
+  else
+    checkStr += '  - pageLoadComplete';
+  console.log(checkStr);
+  if ( sprite_loaded  && tieFighterImageLoaded && 
+         tiles_loaded && pageLoadComplete ) {
+
+    clearInterval(myInterval);
+
+    for (var j=1; j<sprites.length; j++) {
+      if (sprites[j].type == spriteType.tieFighter) {
+        sprites[j].SetImage(tieFighters);
+        sprites[j].SetCellHeightWidth(32, 32);
+        sprites[j].SetHeightWidth(32, 32);
+      }
+    }
+    spaceSW();
+    eraseEverything();
+    drawEverything();
+    
+    myInterval = self.setInterval(function(){Tick()}, INTERVAL);
+  }
+}
+function whenKeyPressed(key) {
+  switch (key) {
+        case 28:
+        this.Player1X +=2;  
+      	if (Player1X > 608)
+        Player1X = 608;
+      break;
+
+    	case 29:
+        this.Player1X -=2;  
+      	if (Player1X < 0)
+        Player1X = 1;
+      break;
+
+   	case 30:      
+        this.Player1Y -=2;
+ 	if (Player1Y < 0)
+        Player1Y = 1;  
+      break;
+
+   	case 31:      
+        this.Player1Y +=2;
+     	if (Player1Y > 448)
+        Player1Y = 448;
+      break;
+
+	case 100:
+        this.Player2X +=2;  
+     	if (Player2X > 608)
+        Player2X = 608;
+      break;
+
+   	case 97: 
+        this.Player2X -=2;  
+      	if (Player2X < 0)
+        Player2X = 1;
+      break;
+
+    	case 119:       
+        this.Player2Y -=2;
+ 	if (Player2Y < 0)
+        Player2Y = 1; 
+      break;
+
+  	case 115:       
+        this.Player2Y +=2;
+    	if (Player2Y > 448)
+        Player2Y = 448;
+      break;
+  }
+ }
+</script>
+</head>
+<body onload="loadComplete()" bgcolor="#0f0000" text="#ffffff">
+<center>
+<script type="application/javascript">
+  document.write('<canvas id="theCanvas" tabindex="1" width="' + WIDTH
+    + '" height="' + HEIGHT + '"></canvas>');
+document['onkeydown'] = function(event) {
+    event = event || window.event;
+    var key = event.which || event.cursor;
+    switch (key) {
+      case 37:  
+        key = 29;
+        break;
+      case 38:
+        key = 30;
+        break;
+      case 39:  
+        key = 28;
+        break;
+      case 40: 
+        key = 31;
+        break;
+      case 65:  
+        key = 97;
+        break;
+      case 87:  
+        key = 119;
+        break;
+      case 68: 
+        key = 100;
+        break;
+      case 83: 
+        key = 115;
+        break;
+    }
+
+    whenKeyPressed(key);
+  };
+
+</script>
+<h2>tieFighters</h2>
+</center>
+
+</body></html>
+

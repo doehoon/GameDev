@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<title>Two Pokemon</title>
+
+<script type="application/javascript">
+
+var INTERVAL = 50;
+var DEBUG = false; //true;
+
+var canvas;              // The canvas shown on the page.
+var ctx;                 // The context, used to access the canvas.
+var gainCoin = true;
+
+var Player1Score = 0;
+var Player2Score = 0;
+
+var CoinsX = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+var CoinsY = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+var CoinsWidth = 32;
+var CoinsHeight = 32;
+
+var Player1Row = 0;      // Row of the graphic to show
+var Player1Col = 0;      // Col of the graphic to show
+var MaxPlayer1Row = 20;   // How many rows of images
+var MaxPlayer1Col = 20;   // How many columns of images
+
+var Player2Row = 0;      // Row of the graphic to show
+var Player2Col = 0;      // Col of the graphic to show
+var MaxPlayer2Row = 20;   // How many rows of images
+var MaxPlayer2Col = 20;   // How many columns of images
+
+var Player1X = 325;      // Position of sprite on the canvas
+var Player1Y = 200;
+var Player1Width = 32;   // Width, Height of each subimage
+var Player1Height = 32;
+
+var Player2X = 275;      // Position of sprite on the canvas
+var Player2Y = 200;
+var Player2Width = 32;   // Width, Height of each subimage
+var Player2Height = 32;
+
+var CoinsRow = 0;      // Row of the graphic to show
+var CoinsCol = 0;      // Col of the graphic to show
+var MaxCoinsRow = 20;   // How many rows of images
+var MaxCoinsCol = 20;   // How many Columns of images
+
+var Player1 = new Image();
+Player1.src = "Mew.png";
+
+var Player2 = new Image();
+Player2.src = "Pika.png";
+
+var Coins = new Image();
+Coins.src = "Coins.png";
+
+var myInterval;
+
+function resetCanvas() {
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+}
+
+function drawElements() {
+
+  ctx.drawImage(Player1, Player1Col * Player1Width, Player1Row * Player1Height, Player1Width, Player1Height, Player1X, Player1Y, Player1Width, Player1Height);
+
+  ctx.drawImage(Player2, Player2Col * Player2Width, Player2Row * Player2Height, Player2Width, Player2Height, Player2X, Player2Y, Player2Width, Player2Height);
+  
+  for (let i = 0; i < CoinsX.length; i++) { 
+
+  ctx.drawImage(Coins, CoinsCol * CoinsWidth, CoinsRow * CoinsHeight, CoinsWidth, CoinsHeight, CoinsX[i], CoinsY[i], CoinsWidth, CoinsHeight);
+ } 
+ 
+}
+
+function drawScore1() {
+   	ctx.font = "16px arial";
+	ctx.fillStyle = "#ffffff";
+	ctx.fillText("Player 1 : " + Player1Score, 8, 20);
+}
+
+function drawScore2() {
+        ctx.font = "16px arial";
+        ctx.fillStyle = "ffffff";
+        ctx.fillText("Player 2 : " + Player2Score, 550, 20);
+}
+
+function Tick() {
+  resetCanvas();
+  drawElements();
+  drawScore1();
+  drawScore2();
+}
+	
+function loadComplete() {
+  console.log("Load is complete.");
+  canvas = document.getElementById("theCanvas");
+  ctx = canvas.getContext("2d");
+
+  CoinsX = [Math.floor(Math.random() * 640) -32,
+	   Math.floor(Math.random() * 640) -32,
+ 	   Math.floor(Math.random() * 640) -32,
+ 	   Math.floor(Math.random() * 640) -32,
+ 	   Math.floor(Math.random() * 640) -32,
+ 	   Math.floor(Math.random() * 640) -32,
+ 	   Math.floor(Math.random() * 640) -32,
+ 	   Math.floor(Math.random() * 640) -32,
+ 	   Math.floor(Math.random() * 640) -32];
+
+  CoinsY = [Math.floor(Math.random() * 480) -32,
+	   Math.floor(Math.random() * 480) -32,
+ 	   Math.floor(Math.random() * 480) -32,
+	   Math.floor(Math.random() * 480) -32,
+	   Math.floor(Math.random() * 480) -32,
+	   Math.floor(Math.random() * 480) -32,
+	   Math.floor(Math.random() * 480) -32,
+	   Math.floor(Math.random() * 480) -32,
+	   Math.floor(Math.random() * 480) -32];
+
+  myInterval = self.setInterval(function(){Tick()}, INTERVAL);
+  }	
+
+// What to do when the user presses a key.
+function whenKeyPressed(key) {
+  switch (key) {
+        case 28:
+        Player1X +=2;  // Right arrow was pressed
+      	if (Player1X > 608)
+        Player1X = 608;
+      break;
+
+    	case 29:
+        Player1X -=2;  // Left arrow, ASCII 29
+      	if (Player1X < 0)
+        Player1X = 1;
+      break;
+
+   	case 30:      // Up arrow was pressed
+        Player1Y -=2;
+ 	if (Player1Y < 0)
+        Player1Y = 1;  // reset column to first image
+      break;
+
+   	case 31:      // Down arrow was pressed
+        Player1Y +=2;
+     	if (Player1Y > 448)
+        Player1Y = 448;// reset column to first image
+      break;
+
+	case 100:
+        Player2X +=2;  // D was pressed
+     	if (Player2X > 608)
+        Player2X = 608;
+      break;
+
+   	case 97: 
+        Player2X -=2;  // A was pressed
+      	if (Player2X < 0)
+        Player2X = 1;
+      break;
+
+    	case 119:       // W was pressed
+        Player2Y -=2;
+ 	if (Player2Y < 0)
+        Player2Y = 1;  // reset column to first image
+      break;
+
+  	case 115:       // S was pressed
+        Player2Y +=2;
+    	if (Player2Y > 448)
+        Player2Y = 448;// reset column to first image
+      break;
+  }
+ collisionDetector();
+}
+function collisionDetector() {
+
+  for (let i = 0; i < CoinsX.length; i++) {
+
+  if (((Player1X >= CoinsX[i] && Player1X <= CoinsX[i] + 32) || (Player1X + 32 >= CoinsX[i] && Player1X + 32 <= CoinsX[i] + 32)) &&
+       ((Player1Y >= CoinsY[i] && Player1Y <= CoinsY[i] + 32) || (Player1Y + 32 >= CoinsY[i] && Player1Y + 32 <= CoinsY[i] + 32)))
+         {
+         Player1Score += 10;
+         CoinsX.splice(i,1);
+         CoinsY.splice(i,1);
+         }
+   if (((Player2X >= CoinsX[i] && Player2X <= CoinsX[i] + 32) || (Player2X + 32 >= CoinsX[i] && Player2X + 32 <= CoinsX[i] + 32)) &&
+       ((Player2Y >= CoinsY[i] && Player2Y <= CoinsY[i] + 32) || (Player2Y + 32 >= CoinsY[i] && Player2Y + 32 <= CoinsY[i] + 32)))
+         {
+         Player2Score += 10;
+         CoinsX.splice(i,1);
+         CoinsY.splice(i,1);
+         }
+     }
+}
+
+</script>
+</head>
+<body onload="loadComplete()" bgcolor="#27ae60" text="#f1c40f">
+<center>
+<canvas id="theCanvas" tabindex="1" width="640" height="480"></canvas>
+<h2>Coin collecting Pokemon</h2>
+</center>
+<script type="application/javascript">
+  // Set up a function to handle key-presses.
+  // This should work across most browsers.
+  document['onkeydown'] = function(event) {
+    event = event || window.event;
+    var key = event.which || event.cursor;
+  // Check for a special key value, and map it to ASCII.
+    switch (key) {
+      case 37:  // Left arrow, ASCII 29
+        key = 29;
+        break;
+      case 38:  // Up arrow, ASCII 30
+        key = 30;
+        break;
+      case 39:  // Right arrow, ASCII 28
+        key = 28;
+        break;
+      case 40:  // Down arrow, ASCII 31
+        key = 31;
+        break;
+      case 65:  // A, ASCII 
+        key = 97;
+        break;
+      case 87:  // W, ASCII 
+        key = 119;
+        break;
+      case 68:  // D, ASCII 
+        key = 100;
+        break;
+      case 83:  // S, ASCII 
+        key = 115;
+        break;
+    }
+    //document.getElementById("keydown").innerHTML =
+    //  " key Down event, keycode " + key;
+    whenKeyPressed(key);
+  };
+</script>
+</body>
+</html>

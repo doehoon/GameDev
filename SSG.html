@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<title>Simon says...</title>
+
+<script type="application/javascript">
+
+var DEBUG = false;
+
+var theCanvas;
+var theContext;
+var MAXWIDTH = 640;
+var MAXHEIGHT = 480;
+var dbstr = ' ';   // for debugging
+
+var simonSays = [0, 0, 0, 0];
+var thissound1; 
+var thissound2; 
+var thissound3; 
+var thissound4; 
+var whichSound = 1;  // Which sound played.
+
+var centerX = Math.floor(MAXWIDTH/2);
+var centerY = Math.floor(MAXHEIGHT/2);
+
+var mouseX = 0;          // X and Y mouse coords, 
+var mouseY = 0;          // according to its last move event.
+var Xoffset = 0;         // MouseX,Y values are not correct. This corrects X.
+var Yoffset = 0;         // MouseX,Y values are not correct. This corrects Y.
+var lastX = 0;           // X where mouse down event was
+var lastY = 0;           // Y where mouse down event was
+var buttonClicked = 0;
+var starter = false;
+var buttonPressed = false;
+
+var myInterval;
+
+function erase_canvas() {
+  theContext.clearRect(0, 0, MAXWIDTH, MAXHEIGHT);
+}
+
+function showEverything() {
+
+  theCanvas = document.getElementById("theCanvas");
+  theContext = theCanvas.getContext("2d");
+
+  thissound1 = document.getElementById('audio1');
+  thissound2 = document.getElementById('audio2');
+  thissound3 = document.getElementById('audio3');
+  thissound4 = document.getElementById('audio4');
+
+  setUpListeners(); 
+  calibrate();        
+  document.getElementById("theCanvas").focus();
+
+  theContext.fillStyle = "#00ff00";
+  theContext.fillRect(0, 0, centerX, centerY);
+  theContext.fillStyle = "#0000ff";
+  theContext.fillRect(centerX, centerY, MAXWIDTH, MAXHEIGHT);
+  theContext.fillStyle = "#ffff00";
+  theContext.fillRect(0, centerY, centerX, MAXHEIGHT);
+  theContext.fillStyle = "#ff0000";
+  theContext.fillRect(centerX, 0, MAXWIDTH, centerY);
+
+  document.getElementById("theCanvas").focus();
+}
+
+function green() {
+  document.bgColor = "#00ff00";
+}
+
+function red() {
+  document.bgColor = "#ff0000";
+}
+
+function blue() {
+  document.bgColor = "#0000ff";
+}
+
+function yellow() {
+  document.bgColor = "#ffff00";
+}
+
+function black() {
+  document.bgColor = "#000000";
+}
+
+function calibrate() {
+    var obj = theCanvas;
+    var top = 0;
+    var left = 0;
+
+    while (obj && obj.tagName != 'BODY') {
+        top += obj.offsetTop;
+        left += obj.offsetLeft;
+        obj = obj.offsetParent;
+    }
+    Xoffset = -left + window.pageXOffset;
+    Yoffset = -top + window.pageYOffset;
+}
+
+function mouseUpEvent() {
+  buttonPressed = false;
+}
+
+function mouseDownEvent() {
+  if(starter){
+  lastX = mouseX;
+  lastY = mouseY;  
+  buttonPressed = true;
+ 
+  if (DEBUG)
+    console.log(" Mouse down at " + mouseX + ", " + mouseY);
+
+  if ((mouseX > 0) && (mouseX < centerX) &&
+      (mouseY > 0) && (mouseY < centerY)) {
+    green();
+    whichSound = 1; 
+    thissound1.play();
+  } else if ((mouseX > 0) && (mouseX < centerX) &&
+             (mouseY > centerY) && (mouseY < MAXHEIGHT)) {
+    yellow();
+    whichSound = 2; 
+    thissound2.play();
+  } else if ((mouseX >= centerX) && (mouseX < MAXWIDTH) &&
+             (mouseY > 0) && (mouseY < centerY)) {
+    red();
+    whichSound = 3; 
+    thissound3.play();
+  } else if ((mouseX >= centerX) && (mouseX < MAXWIDTH) &&
+             (mouseY >= centerY) && (mouseY < MAXHEIGHT)) {
+    blue();
+    whichSound = 4; 
+    thissound4.play();
+  } else {
+    black();
+  } 
+  if(whichSound - 1 == simonSays[buttonClicked]){
+    buttonClicked++;
+  } else {
+    window.alert("Game Over");
+    window.alert("Refresh to play agian");
+    starter = false;
+    black();
+  }
+  if(buttonClicked == 4){
+    window.alert("Great Job!");
+    window.alert("Refresh to play agian");
+    starter = false;
+    black();
+  }
+}
+}
+
+function setUpListeners() {
+ 
+    document.addEventListener('mousemove', function(evt) {
+        var d = new Date();
+        var t = d.toLocaleTimeString();
+
+        mouseX = evt.clientX + Xoffset;
+        mouseY = evt.clientY + Yoffset;
+
+    }, false);
+
+    document.addEventListener('mousedown', mouseDownEvent, false);
+    document.addEventListener('mouseup', mouseUpEvent, false);
+};
+
+var sound2play = 0;
+
+function PlayNext() {
+  switch (simonSays[sound2play]) {
+    case 0:
+      green();
+      thissound1.play();
+      break;
+    case 1:
+      yellow();
+      thissound2.play();
+      break;
+    case 2:
+      red();
+      thissound3.play();
+      break;
+    case 3:
+      blue();
+      thissound4.play();
+      break;
+    default:
+      black();
+      clearInterval(myInterval);
+      starter = true;
+      break;   
+  }
+  sound2play++;
+}
+
+
+function startButton() {
+  
+  simonSays = [Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4)];
+  buttonClicked = 0;  
+  sound2play = 0; 
+  myInterval = self.setInterval(function(){PlayNext()}, 1000);
+
+}
+
+//]]>
+</script>
+
+</head>
+<body onload="showEverything()" bgcolor="#000000" text="#ffffff">
+
+<center>
+Simon Says...
+<br>
+
+<!-- <canvas id="theCanvas" tabindex="1" width="320" height="240"></canvas> -->
+<!-- http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas -->
+<script type="application/javascript">
+  document.write('<canvas id="theCanvas" tabindex="1" width="' + 640 + '" height="' + 480 + '"></canvas>');
+</script>
+<font face="monospace" color="white">
+<p id="status"></p>
+</font>
+<button type="button" onclick="startButton(); return false"/>START</button>
+<br>
+<br>
+<!-- Example from http://www.phon.ucl.ac.uk/home/mark/audio/play10.htm -->
+<!-- With example from http://www.storiesinflight.com/html5/audio.html -->
+<audio id="audio1" src="simonSound1.mp3" preload="auto" >
+</audio>
+<audio id="audio2" src="simonSound2.mp3" preload="auto" >
+</audio>
+<audio id="audio3" src="simonSound3.mp3" preload="auto" >
+</audio>
+<audio id="audio4" src="simonSound4.mp3" preload="auto" >
+</audio>
+</center>
+</body></html>
+

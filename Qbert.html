@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<title>Qbert</title>
+<script type="application/javascript">
+
+  var WIDTH = 420;       
+  var HEIGHT = 480;      
+
+  var pts = new Array(); 
+  var board = new Array();
+
+  var valid_temp = [  0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0,
+                      0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0,
+                      0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0,
+                      0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,
+                      1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1];
+
+  let MAXCOL = 13;      
+  let MAXROW = 7;         
+  var playerRow = 2;
+  var playerCol = 6;
+  var playerX = playerCol * 30 + 10; 
+  var playerY = playerRow * 48 - 8;
+  
+  function gameOver() {
+    delete_the_avatar();
+    window.alert("Game Over");
+    
+	return;
+}
+  function winningPoint() {
+    window.alert("Great job!");
+	 return;
+}
+  function loadComplete() {
+    console.log("Load is complete.");
+    canvas = document.getElementById("theCanvas");
+    ctx = canvas.getContext("2d");
+
+    pts.push({X:0,  Y:16});
+    pts.push({X:28, Y:0});   
+    pts.push({X:56, Y:16});   
+    pts.push({X:28, Y:32});
+
+    pts.push({X:0,  Y:16});
+    pts.push({X:28, Y:32});
+    pts.push({X:28, Y:64});
+    pts.push({X:0,  Y:49});
+
+    pts.push({X:28, Y:32});
+    pts.push({X:56, Y:16});
+    pts.push({X:56, Y:49});
+    pts.push({X:28, Y:64});
+
+    var r, c;
+    for (r = 0; r < MAXROW; r++) {
+      for (c = 0; c < MAXCOL; c++) {
+        if (valid_temp[r*MAXCOL + c] == 0) {
+          board.push({row:r, col:c, visited:false, valid:false});
+        } else {
+          board.push({row:r, col:c, visited:false, valid:true});
+        } 
+      }
+    }
+
+    board[playerRow * MAXCOL + playerCol].visited = true;
+
+    draw_the_board();
+    draw_the_avatar();
+  }
+ 
+  function draw_a_cube(Xoffset, Yoffset, top_color) {  
+
+    ctx.strokeStyle = "#DDDD99";   
+    ctx.beginPath();
+    ctx.moveTo(Xoffset + pts[0].X, Yoffset + pts[0].Y);
+    ctx.lineTo(Xoffset + pts[1].X, Yoffset + pts[1].Y);
+    ctx.lineTo(Xoffset + pts[2].X, Yoffset + pts[2].Y);
+    ctx.lineTo(Xoffset + pts[3].X, Yoffset + pts[3].Y);
+    ctx.closePath();
+
+    ctx.fillStyle = top_color;    
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = "#DDDD99";   
+    ctx.beginPath();
+    ctx.moveTo(Xoffset + pts[4].X, Yoffset + pts[4].Y);
+    ctx.lineTo(Xoffset + pts[5].X, Yoffset + pts[5].Y);
+    ctx.lineTo(Xoffset + pts[6].X, Yoffset + pts[6].Y);
+    ctx.lineTo(Xoffset + pts[7].X, Yoffset + pts[7].Y);
+    ctx.closePath();
+    ctx.fillStyle = "#443015";  
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = "#DDDD99";   
+    ctx.beginPath();
+    ctx.moveTo(Xoffset + pts[8].X, Yoffset + pts[8].Y);
+    ctx.lineTo(Xoffset + pts[9].X, Yoffset + pts[9].Y);
+    ctx.lineTo(Xoffset + pts[10].X, Yoffset + pts[10].Y);
+    ctx.lineTo(Xoffset + pts[11].X, Yoffset + pts[11].Y);
+    ctx.closePath();
+    ctx.fillStyle = "#154430";  
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  function eraseEverything() {
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  }
+
+  function draw_the_board() {
+    var myrow, mycol;
+
+    for (var r=0; r<MAXROW; r++) {
+      for (var c=0; c<MAXCOL; c++) {
+ 
+        if (board[r*MAXCOL + c].valid) {
+          mycol = board[r*MAXCOL + c].col;
+          myrow = board[r*MAXCOL + c].row;
+          if (board[r*MAXCOL + c].visited) {
+            draw_a_cube(mycol*30, myrow*48, "#D0D020");   
+          } else {
+            draw_a_cube(mycol*30, myrow*48, "#2020F0");   
+          }
+        }
+      }
+    }
+  }
+
+  function delete_the_avatar() {
+    ctx.clearRect(playerX, playerY, 32, 32);
+}
+  function draw_the_avatar() {	
+    var Qbert = new Image();
+    Qbert.src = "Qbert.png";	
+    ctx.drawImage(Qbert, playerX, playerY);
+}
+  function Title() {
+    var QbertT = new Image();
+    QbertT.src = "QbertT.png";
+    ctx.drawImage(QbertT, 10, 380, 300, 100);
+}
+  function wrongWay() {
+    for (var i = 0; i < board.length; i++) {
+    if (board[i].visited == true && board[i].vaild == false) {
+    playerCol = 0;
+    playerRow = 0;
+    delete_the_avater();
+    gameOver();
+    }
+  }
+}
+  function activateSquare(arr) {
+     var score = 0;
+     for (var i = 0; i < arr.length; i++) {
+       if (playerRow < 13) {
+       if (arr[i].visited == true && arr[i].valid == true) {
+         score++;
+         }
+       }
+     }
+   return score;
+ }
+  function Tick() {
+     eraseEverything();
+     draw_the_board();
+     draw_the_avatar();
+     Title();   
+}
+
+  function whenKeyPressed(key) {
+    switch (key) {
+      case 119:  //  upper-left "w"
+	playerCol = playerCol - 1;
+	playerRow = playerRow - 1;
+	playerX = playerCol * 30 + 10;
+	playerY = playerRow * 48 - 8;
+	board[playerRow * MAXCOL + playerCol].visited = true;
+	Tick();
+	wrongWay();	
+        break;
+
+      case 101:  // upper-right "e"
+	playerCol = playerCol + 1;
+        playerRow = playerRow - 1;
+        playerX = playerCol * 30 + 10;
+        playerY = playerRow * 48 - 8;
+	board[playerRow * MAXCOL + playerCol].visited = true;
+	Tick();
+        wrongWay();
+        break;
+
+      case 115:  // lower-left "s"
+	playerCol = playerCol - 1;
+        playerRow = playerRow + 1;
+        playerX = playerCol * 30 + 10;
+        playerY = playerRow * 48 - 8;
+	board[playerRow * MAXCOL + playerCol].visited = true;
+	Tick();
+        wrongWay();
+        break;
+
+      case 100:  // lower-right "d"
+	playerCol = playerCol + 1;
+        playerRow = playerRow + 1;
+        playerX = playerCol * 30 + 10;
+        playerY = playerRow * 48 - 8;
+	board[playerRow * MAXCOL + playerCol].visited = true;
+	Tick();
+        wrongWay();
+        break;
+
+      default:
+        break;
+    }
+  	if (playerRow == MAXROW || playerCol == MAXCOL) {
+	Tick();
+	gameOver();
+	} else {
+	board[playerRow * MAXCOL + playerCol].visited = true;
+	Tick();
+	}
+	wrongWay();	
+
+  if (activateSquare(board) == 28) {
+  winningPoint();
+  }  
+}
+
+</script>
+</head>
+<body onload="loadComplete()" bgcolor="#0f0f0f" text="#ffffff">
+<center>
+<script type="application/javascript">
+  document.write("<canvas id=\"theCanvas\" tabindex=\"1\" width=\"" + WIDTH
+    + "\" height=\"" + HEIGHT + "\"></canvas>");
+  document['onkeydown'] = function(event) {
+    event = event || window.event;
+  var key = event.which || event.cursor;
+
+    switch (key) {
+      case 69:  // E, ASCII
+        key = 101;
+        break;
+      case 87:  // W, ASCII
+        key = 119;
+        break;
+      case 68:  // D, ASCII
+        key = 100;
+        break;
+      case 83:  // S, ASCII
+        key = 115;
+        break;
+    }
+    whenKeyPressed(key);
+  };
+</script>
+</body>
+</html>
