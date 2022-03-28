@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<title>Jumping Man</title>
+<script type="application/javascript">
+
+var INTERVAL = 50;
+var DEBUG = false;
+
+var myInterval;
+
+var canvas;        
+var ctx;        
+var CANVASWIDTH = 640;
+var CANVASHEIGHT = 480;
+
+var SpriteRow = 1;      
+var SpriteCol = 0;   
+var boxRow = 0;
+var boxCol = 0;
+var MaxSpriteRow = 8;
+var MaxSpriteCol = 8;
+
+var SpriteX = 340;          
+var SpriteY = 380; 
+var boxX = 100;
+var boxY = 380;
+var SpriteWidth = 32;   
+var SpriteHeight = 32;
+var SpriteYdefault = 380; 
+var PlayerFaceLeftRow = 0;   
+var PlayerFaceRightRow = 1;
+
+var jumpSequence = 0;  
+     
+var mountain_offset = 0;     
+var tree_offset = 0;        
+var goal_offset = 0;        
+var box_offset = 0;
+
+var TREEMAX;                 
+var MOUNTAINMAX;             
+var boxMAX;
+
+var TreeSpeed = 10;          
+var MountainSpeed = 5;      
+var boxSpeed = 10;
+
+var trees_loaded = false;
+var mountains_loaded = false;
+var sprite_loaded = false;
+var box_loaded = false;
+var object_loaded = false;
+var pageLoadComplete = false;
+
+var SpriteImage = new Image(); 
+SpriteImage.src = "mega_man.png";
+
+var mountains   = new Image();  
+mountains.src   = "mountains.png";
+
+var trees       = new Image();    
+trees.src       = "trees.png";
+
+var box   = new Image();
+box.src   = "box.png";
+
+var TreeHeight  = 0;
+var TreeWidth   = 0;
+var TREE_HEIGHT_FROM_GROUND = 0;
+
+SpriteImage.onload = function() {
+  sprite_loaded = true;
+}
+
+trees.onload = function() {
+  TreeHeight = trees.height;
+  TreeWidth = trees.width;
+  TREE_HEIGHT_FROM_GROUND = 150;
+  TREEMAX = TreeWidth - CANVASWIDTH;
+  goal_offset = TREEMAX - 100;
+  trees_loaded = true;
+}
+
+mountains.onload = function() {
+  MOUNTAINMAX = mountains.width - CANVASWIDTH;
+  mountains_loaded = true;
+}
+
+box.onload = function() {
+  boxMAX = box.width - CANVASWIDTH;
+  box_loaded = true;
+}
+
+function skyblue() {
+	document.bgColor = "#00eeff";
+}
+
+function red() {
+	document.bgColor = "#ff0000";
+}
+
+function green() {
+	document.bgColor = "#00ee11";
+}
+
+function eraseSprite() {
+	ctx.clearRect(SpriteX, SpriteY, SpriteWidth, SpriteHeight);
+}
+
+function eraseEverything() { 
+	ctx.clearRect(0, 0, CANVASWIDTH, CANVASHEIGHT);
+}
+
+function drawEverything() {
+  ctx.drawImage(mountains, mountain_offset, 0, CANVASWIDTH, CANVASHEIGHT, 0, 0, CANVASWIDTH, CANVASHEIGHT);
+  ctx.drawImage(trees, tree_offset, 0, CANVASWIDTH, TreeHeight, 0, TREE_HEIGHT_FROM_GROUND, CANVASWIDTH, TreeHeight); 
+  if(tree_offset % 2000 == 0){
+        object_loaded = true;
+	}
+  if(object_loaded){
+  drawBox();
+  }
+  drawSprite();
+}
+
+function drawSprite() {
+  ctx.drawImage(SpriteImage, SpriteCol * SpriteWidth, SpriteRow * SpriteHeight, SpriteWidth, SpriteHeight, SpriteX, SpriteY, SpriteWidth, SpriteHeight); 
+}
+
+function drawBox(){
+  ctx.drawImage(box, boxCol * SpriteWidth , boxRow * SpriteHeight, SpriteWidth, SpriteHeight, boxX, boxY, SpriteWidth,  SpriteHeight);
+}
+
+
+function Tick() {
+
+  eraseEverything();
+
+  if (jumpSequence > 0) {
+    jumpSequence++;
+    if (jumpSequence > 32) {
+
+      SpriteY = SpriteYdefault;
+      jumpSequence = 0;
+    } else if (jumpSequence > 16) {
+      SpriteY += 4;
+    } else {
+      SpriteY -= 4; 
+    }
+
+      SpriteCol++;
+      if (SpriteCol >= MaxSpriteCol)
+        SpriteCol = 0;
+  }
+
+  drawEverything();
+
+  if (tree_offset >= goal_offset) {
+    console.log("You win!");
+    document.getElementById("youwin").innerHTML = "You win!";
+    green();
+    clearInterval(myInterval);
+
+  } else if((((SpriteX >= boxX && SpriteX <= boxX + 32) || (SpriteX + 32 >= boxX && SpriteX + 32 <= boxX + 32)) && ((SpriteY >= boxY && SpriteY <= boxY + 32) || (SpriteY + 32 >= boxY && SpriteY + 32 <= boxY + 32)))){
+         console.log("You Lost!");
+         document.getElementById("youlost").innerHTML = "You Lost!";
+         red();
+         clearInterval(myInterval);
+         }
+}
+
+function loadComplete() {
+  console.log("Load is complete."); 
+  canvas = document.getElementById("theCanvas");
+  ctx = canvas.getContext("2d");
+  pageLoadComplete = true;
+  myInterval = self.setInterval(function(){check4all_loaded()}, 500);
+}
+
+function check4all_loaded() {
+  if ( sprite_loaded  && trees_loaded  && mountains_loaded && box_loaded &&  pageLoadComplete ) {
+    clearInterval(myInterval);
+    skyblue();
+    eraseEverything();
+    drawEverything();
+    myInterval = self.setInterval(function(){Tick()}, INTERVAL);
+  }
+}
+
+function whenKeyPressed(key) {
+  switch (key) {
+    case 28: 
+      SpriteRow = PlayerFaceRightRow;
+      SpriteCol++;
+      if (SpriteCol >= MaxSpriteCol)
+        SpriteCol = 0;
+      tree_offset = tree_offset + TreeSpeed;
+      if (tree_offset >= TREEMAX)
+        tree_offset = TREEMAX - 1;
+      mountain_offset = mountain_offset + MountainSpeed;
+      if (mountain_offset >= MOUNTAINMAX)
+        mountain_offset = MOUNTAINMAX - 1;
+      boxX = boxX - boxSpeed;
+      if(boxX <= 0){
+	boxX = 600
+	}
+      break;
+
+    case 29:  // Left arrow, ASCII 29 
+      SpriteRow = PlayerFaceLeftRow;
+      SpriteCol++;
+      if (SpriteCol >= MaxSpriteCol)
+        SpriteCol = 0;
+      tree_offset = tree_offset - TreeSpeed;
+      if (tree_offset < 0)
+        tree_offset = 0;
+      mountain_offset = mountain_offset - MountainSpeed;
+      if (mountain_offset < 0)
+        mountain_offset = 0;
+      boxX = boxX + boxSpeed;
+      if(boxX == 640){
+          boxX = 100
+          }
+      break;
+
+    case 30:  // Up arrow was pressed 
+      break;
+
+    case 31:
+      break;
+
+    case 32:  //spaceBar
+      if (jumpSequence == 0) {
+        jumpSequence = 1;
+      }
+      SpriteRow = PlayerFaceRightRow;
+      SpriteCol++;
+      if (SpriteCol >= MaxSpriteCol)
+      SpriteCol = 0;
+      tree_offset = tree_offset + TreeSpeed;
+      if (tree_offset >= TREEMAX)
+        tree_offset = TREEMAX - 1;
+      mountain_offset = mountain_offset + MountainSpeed;
+      if (mountain_offset >= MOUNTAINMAX)
+        mountain_offset = MOUNTAINMAX - 1;
+      boxX = boxX - boxSpeed;
+      if(boxX <= 0){
+      boxX = 600
+      }
+    break;
+  }
+}
+///]]>
+</script>
+</head>
+<body onload="loadComplete()" bgcolor="#0f0000" text="#000000">
+<script type="application/javascript">
+  document.write('<center>');
+  document.write('<canvas id="theCanvas" tabindex="1" width="' + CANVASWIDTH
+    + '" height="' + CANVASHEIGHT + '"></canvas>');
+  document.write('<h2>Holding Space bar = right jump</h2>');
+  document.write('<h2>go to right to reach goal</h2>');
+  document.write('<h2 style="font-size:10vw" id="youwin"></h2>');
+  document.write('<h2 style="font-size:10vw" id="youlost"></h2>');
+  document.write('</center>');
+  document['onkeydown'] = function(event) {
+    event = event || window.event;
+    var key = event.which || event.cursor;
+    switch (key) {
+      case 37:  // Left arrow, ASCII 29 
+        key = 29;
+        break;
+      case 38:  // Up arrow, ASCII 30
+        key = 30;
+        break;
+      case 39:  // Right arrow, ASCII 28  
+        key = 28;
+        break; 
+      case 40:  // Down arrow, ASCII 31
+        key = 31;
+        break;
+    }
+    whenKeyPressed(key);
+  };
+</script>
+</body></html>
