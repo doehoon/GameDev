@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <title>Dodge the Rock</title>
+  <style>
+    #wrapper {
+    position: relative;
+    width: 640px;
+    height: 480px;
+    }
+
+    #theCanvas, #theCanvas2 {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 640px;
+    height: 480px;
+    }
+  </style>
+  <script type="application/javascript">
+    var INTERVAL = 20;
+    var DEBUG = false;
+
+    var canvas;
+    var ctx;
+    var canvas2;
+    var ctx2;
+
+    var SpriteRow = 0;
+    var SpriteCol = 0;
+    var MaxSpriteRow = 8;
+    var MaxSpriteCol = 8;
+    var MaxBoulderCol = 8;
+    var tileWidth = 32;
+    var tileHeight = 32;
+    var goal_found = false;
+    var GOALTILE = 5;
+
+    var upSequence = 0;
+    var downSequence = 0;  
+    var leftSequence = 0;
+    var rightSequence = 0;
+
+    var SpriteWidth = 32;  
+    var SpriteHeight = 32;
+    var HalfSpriteWidth = 16; 
+    var HalfSpriteHeight = 16;
+
+    var WIDTH = 640;   
+    var HEIGHT = 480; 
+    var MAXROW = 15;
+    var MAXCOL = 20;
+    var moved = false; 
+    var myX = 100;  
+    var myY = 300; 
+    var moveAmount = 8; 
+    var squareWidth = 32; 
+    var squareHeight = 32;
+
+    var boulderX = 0;
+    var boulderY = 0;
+    var boulderDX = 0;
+    var boulderDY = 5;
+    var boulderCol = 0;
+    var boulderRow = 0;
+    var boulderActive = false;
+    var tickCount = 20;
+
+    var stars_offset = 0;
+    var goal_offset = 0; 
+    var STARSMAX;
+    var starsSpeed = 0.25;
+
+    var stars_loaded = false;
+    var sprite_loaded = false;
+    var trees_loaded = true;
+    var mountains_loaded = true;
+    var tiles_loaded = true; 
+    var boulder_loaded = false;
+    var pageLoadComplete = false;
+
+    var stars = new Image();
+    stars.src = "starbackground.png";
+
+    var SpriteImage = new Image();
+    SpriteImage.src = "spaceship.png";
+
+    var boulderImage = new Image();
+    boulderImage.src = "rolling.png";
+
+    SpriteImage.onload = function () {
+      sprite_loaded = true;
+    }
+    stars.onload = function () {
+      STARSMAX = stars.height - HEIGHT;
+      stars_offset = STARSMAX;
+      stars_loaded = true;
+    }
+    boulderImage.onload = function () {
+     
+      boulder_loaded = true;
+    }
+
+    var blueImage = new Image();
+    blueImage.src = "bluesquare.png";
+
+    var featureImage = new Image(); 
+    featureImage.src = "features.png";
+
+    var myInterval;
+
+    var myarray = [
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+      1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+      1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+      1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+      1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+      1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+      1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+      1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+      1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+      1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+      1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+      1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+      1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+
+    function white() {
+      document.bgColor ="#ffffff";
+      Fill = "#ffffff";
+    }
+
+    function black() {
+      document.bgColor = "#000000";
+      Fill = "#000000";
+    }
+
+    function green() {
+      document.bgColor = "#0f6000";
+      Fill = "#0f6000";
+    }
+
+    function red() {
+      document.bgColor = "#f04040";
+      Fill = "#f04040";
+    }
+
+    function eraseSprite(X, Y) {
+      ctx.clearRect(X, Y, 32, 32);
+    }
+
+    function eraseEverything() {
+      ctx.clearRect(0, 0, WIDTH, HEIGHT);
+    }
+
+    function drawEverything() {
+    
+      ctx.drawImage(stars, 0, Math.floor(stars_offset),
+        WIDTH, HEIGHT, 0, 0, WIDTH, HEIGHT);
+     
+      SpriteCol = drawSprite(SpriteImage, myX, myY, SpriteCol, SpriteRow, MaxSpriteCol);
+      if (boulderActive) {
+        boulderCol = drawSprite(boulderImage, boulderX, boulderY, boulderCol, boulderRow, MaxBoulderCol);
+      }
+    }
+
+    function drawSprite(myImage, myX, myY, myCol, myRow, myMaxSpriteCol) {
+     
+      ctx.drawImage(myImage, myCol * 32, myRow * 32, 32, 32, myX, myY, 32, 32);
+      myCol++;
+      if (myCol >= myMaxSpriteCol)
+        myCol = 0;
+      return myCol;
+    }
+
+    function Tick() {
+
+      eraseEverything();
+      if (moved) {
+        moved = false;
+      }
+      tickCount--;
+      if (tickCount <= 0) {
+        tickCount = 100; 
+        boulderActive = true;
+        boulderX = Math.floor(Math.random() * (HEIGHT - squareWidth));
+        boulderY = 0;
+      }
+
+      if (boulderActive) {   
+        boulderY = boulderY + boulderDY;
+        collisionDetectedSprites();
+      }
+
+      stars_offset = stars_offset - 1;
+      if (stars_offset < 0)
+        stars_offset = 0;
+      if (leftSequence > 0) {
+        leftSequence++;
+        if (leftSequence > leftSeqMax)
+          leftSequence = 0;
+      } else if (rightSequence > 0) {
+        rightSequence++;
+        if (rightSequence > rightSeqMax)
+          rightSequence = 0;
+      }
+
+      if (upSequence + downSequence + leftSequence + rightSequence > 0) {
+        SpriteCol++;
+        if (SpriteCol >= MaxSpriteCol)
+          SpriteCol = 0;
+      }
+
+      drawEverything();
+
+      if (stars_offset <= goal_offset) {
+        console.log("You win!");
+        document.getElementById("youwin").innerHTML = "You win!";
+        green();
+        clearInterval(myInterval);
+      }
+    }
+
+    function loadComplete() {
+      console.log("Load is complete.");
+      canvas = document.getElementById("theCanvas");
+      ctx = canvas.getContext("2d");
+      canvas2 = document.getElementById("theCanvas2");
+      ctx2 = canvas2.getContext("2d");
+
+      SpriteCol = drawSprite(SpriteImage, myX, myY, SpriteCol, SpriteRow, MaxSpriteCol);
+
+      pageLoadComplete = true;
+      myInterval = self.setInterval(function () { check4all_loaded() }, 500);
+    }
+
+    function collisionDetectedSprites() {
+      var diffX = Math.abs(myX - boulderX);
+      var diffY = Math.abs(myY - boulderY);
+      if ((diffX < HalfSpriteWidth) && (diffY < HalfSpriteHeight)) {
+        console.loglo('Collision with player at ' + myX + ', ' + myY
+          + ' and boulder at ' + boulderX + ', ' + boulderY);
+        red();
+        gameOver();
+      }
+    }
+
+    function gameOver() {
+        console.log("You win!");
+        document.getElementById("youlose").innerHTML = "Game Over!";
+	  red();
+	  clearInterval(myInterval);
+    }
+
+    function collisionDetected(newX, newY) {
+      var tempRow = Math.floor(newY / tileWidth);
+      var tempCol = Math.floor(newX / tileHeight);
+      if (myarray[tempRow * MAXCOL + tempCol] == 0)
+        return true;
+      if (!goal_found && (myarray[tempRow * MAXCOL + tempCol] == GOALTILE)) {
+        green();
+        goal_found = true;
+      }
+      return false;
+    }
+
+    function check4all_loaded() {
+      var checkStr = 'check4all timer: ';
+      if (sprite_loaded)
+        checkStr += '  + sprite';
+      else
+        checkStr += '  - sprite';
+      if (boulder_loaded)
+        checkStr += '  + asteroid';
+      else
+        checkStr += '  - asteroid';
+      if (stars_loaded)
+        checkStr += '  + stars';
+      else
+        checkStr += '  - stars';
+      if (trees_loaded)
+        checkStr += '  + trees';
+      else
+        checkStr += '  - trees';
+      if (mountains_loaded)
+        checkStr += '  + mountains';
+      else
+        checkStr += '  - mountains';
+      if (tiles_loaded)
+        checkStr += '  + tiles';
+      else
+        checkStr += '  - tiles';
+      if (pageLoadComplete)
+        checkStr += '  + pageLoadComplete';
+      else
+        checkStr += '  - pageLoadComplete';
+      console.log(checkStr);
+      if (sprite_loaded && stars_loaded && trees_loaded && mountains_loaded &&
+        tiles_loaded && boulder_loaded && pageLoadComplete) {
+        clearInterval(myInterval);
+        black();
+        eraseEverything();
+        drawEverything();
+        console.log('Start a game interval');
+        myInterval = self.setInterval(function () { Tick() }, INTERVAL);
+      }
+    }
+
+    var pause = 0;
+
+    function Paused() {
+      if (pause % 2 == 0) {
+        ctx2.clearRect(0, 0, WIDTH, HEIGHT);
+        myInterval = self.setInterval(function () { Tick() }, INTERVAL);
+      } else { 	
+	ctx2.font = "bold 16px Arial";
+	ctx2.fillStyle = "white";
+  	ctx2.fillText('Paused', 200, 240);
+  	ctx2.fillText('Press esc key to continue', 200, 280);
+	clearInterval(myInterval);
+      }
+    }
+
+    function whenKeyPressed(key) {
+      var newX = myX;
+      var newY = myY;
+      switch (key) {
+        case 28:  // Right arrow was pressed 
+          SpriteRow = 1;
+          newX = newX + moveAmount;
+          if (newX + squareWidth > WIDTH)
+          newX = WIDTH - squareWidth;
+          moved = true;
+          break;
+        case 29:  // Left arrow, ASCII 29 
+          SpriteRow = 0;
+          newX = newX - moveAmount;
+          if (newX < 0)
+          newX = 0;
+          moved = true;
+          break;
+        case 30:  // Up arrow was pressed 
+          SpriteRow = 2;
+          newY = newY - moveAmount;
+          if (newY < 0)
+          newY = 0;
+          moved = true;
+          break;
+        case 31:  // Down arrow was pressed 
+          SpriteRow = 3;
+          newY = newY + moveAmount;
+          if (newY + squareHeight > HEIGHT)
+          newY = HEIGHT - squareWidth;
+          moved = true;
+          break;
+        case 27: // 
+          pause++;
+          Paused();
+
+          break;
+      }
+      if ((collisionDetected(newX, newY)) && (collisionDetected(newX + SpriteWidth, newY)) &&
+        (collisionDetected(newX, newY + SpriteHeight)) && (collisionDetected(newX + SpriteWidth, newY + SpriteHeight))) {
+        myX = newX;
+        myY = newY;
+      } else {
+        console.log("Collision");
+      }
+      SpriteCol = drawSprite(SpriteImage, myX, myY, SpriteCol, SpriteRow, MaxSpriteCol);
+    }
+
+  </script>
+</head>
+<body onload="loadComplete()" bgcolor="#0f0000" text="#ffffff">
+  <center>
+    <div id="wrapper">
+      <canvas id="theCanvas" tabindex="1" width=" 640" height="480"></canvas>
+      <canvas id="theCanvas2" tabindex="1" width=" 640" height="480"></canvas>
+    </div>
+    <h2></h2>
+    <h2 style="font-size:10vw" id="youwin"></h2>
+    <h2 style="font-size:10vw" id="youlose"></h2>
+    <h2>Press up/down/left/right to move </h2>
+  </center>
+  <script type="application/javascript">
+    document['onkeydown'] = function (event) {
+      event = event || window.event;
+      var key = event.which || event.cursor;
+      // Check for a special key value, and map it to ASCII.
+      switch (key) {
+        case 37:  // Left arrow, ASCII 29 
+          key = 29;
+          break;
+        case 38:  // Up arrow, ASCII 30
+          key = 30;
+          break;
+        case 39:  // Right arrow, ASCII 28  
+          key = 28;
+          break;
+        case 40:  // Down arrow, ASCII 31
+          key = 31;
+          break;
+        case 27:  // esc , ASCII 27
+          key = 27;
+          break;
+
+      }
+      whenKeyPressed(key);
+    };
+  </script>
+  <p id="pause"></p>
+</body>
+</html>
